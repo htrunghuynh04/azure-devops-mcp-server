@@ -1,0 +1,15 @@
+{
+  "name": "azure-devops-mcp-server",
+  "version": "1.0.0",
+  "description": "Remote MCP server bridging Azure DevOps for Claude Cowork",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@azure-devops/mcp": "^2.5.0",
+    "supergateway": "^3.4.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
