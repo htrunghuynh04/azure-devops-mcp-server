@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Remote MCP server bridging Azure DevOps for Claude Cowork",
   "scripts": {
-    "prestart": "[ -f node_modules.tar.gz ] && tar -xzf node_modules.tar.gz && rm node_modules.tar.gz || true",
     "start": "node server.js"
   },
   "dependencies": {

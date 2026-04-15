@@ -2,49 +2,59 @@ const { spawn } = require("child_process");
 const http = require("http");
 
 const port = process.env.PORT || 8080;
+const sgPort = 8081;
 
-// Health check server - Azure warmup probe pings "/"
-// This must respond quickly so Azure knows the container is alive
-const healthServer = http.createServer((req, res) => {
-  if (req.url === "/") {
+// Persistent health + proxy server on PORT (Azure warmup probe hits this)
+const server = http.createServer((req, res) => {
+  if (req.url === "/health" || req.url === "/") {
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("OK");
+    return;
   }
+  // Proxy all other requests to supergateway
+  const options = {
+    hostname: "127.0.0.1",
+    port: sgPort,
+    path: req.url,
+    method: req.method,
+    headers: req.headers,
+  };
+  const proxy = http.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+  proxy.on("error", () => {
+    res.writeHead(502);
+    res.end("Supergateway not ready");
+  });
+  req.pipe(proxy);
 });
 
-healthServer.listen(port, () => {
-  console.log(`Health check listening on port ${port}`);
+server.listen(port, () => {
+  console.log(`Proxy server listening on port ${port}`);
 
-  // Start supergateway after warmup probe passes
   const args = [
     "--stdio",
     "mcp-server-azuredevops agentiqai --authentication envvar -d core work work-items search",
     "--outputTransport", "streamableHttp",
-    "--port", String(port),
+    "--port", String(sgPort),
     "--cors",
   ];
 
-  console.log(`Starting supergateway on port ${port}...`);
+  console.log(`Starting supergateway on port ${sgPort}...`);
 
-  // Give Azure time to pass the warmup probe, then hand over the port
-  setTimeout(() => {
-    healthServer.close(() => {
-      console.log("Health server closed, starting supergateway...");
-      const child = spawn("supergateway", args, {
-        stdio: "inherit",
-        env: process.env,
-        shell: true,
-      });
+  const child = spawn("supergateway", args, {
+    stdio: "inherit",
+    env: process.env,
+    shell: true,
+  });
 
-      child.on("error", (err) => {
-        console.error("Failed to start supergateway:", err);
-        process.exit(1);
-      });
+  child.on("error", (err) => {
+    console.error("Failed to start supergateway:", err);
+  });
 
-      child.on("exit", (code) => {
-        console.log(`Supergateway exited with code ${code}`);
-        process.exit(code || 0);
-      });
-    });
-  }, 5000);
+  child.on("exit", (code) => {
+    console.log(`Supergateway exited with code ${code}`);
+    process.exit(code || 0);
+  });
 });
