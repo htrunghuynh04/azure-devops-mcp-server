@@ -17,9 +17,8 @@ console.log(`   Org URL: ${process.env.AZURE_DEVOPS_ORG_URL}`);
 console.log(`   Port: ${port}`);
 
 const child = spawn(
-  "npx",
+  "supergateway",
   [
-    "-y", "supergateway",
     "--stdio", "mcp-server-azure-devops",
     "--outputTransport", "streamableHttp",
     "--port", String(port),
