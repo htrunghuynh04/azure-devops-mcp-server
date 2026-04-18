@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@tiberriver256/mcp-server-azure-devops": "latest",
-    "supergateway": "latest"
+    "supergateway": "2.7.0"
   },
   "engines": {
     "node": ">=20.0.0"
