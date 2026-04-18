@@ -6,8 +6,8 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@azure-devops/mcp": "^2.5.0",
-    "supergateway": "^3.4.3"
+    "@tiberriver256/mcp-server-azure-devops": "latest",
+    "supergateway": "latest"
   },
   "engines": {
     "node": ">=20.0.0"
