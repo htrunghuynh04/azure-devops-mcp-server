@@ -6,6 +6,7 @@ if (!process.env.AZURE_DEVOPS_ORG_URL) {
   console.error("❌ Thiếu biến môi trường AZURE_DEVOPS_ORG_URL");
   process.exit(1);
 }
+
 if (!process.env.AZURE_DEVOPS_PAT) {
   console.error("❌ Thiếu biến môi trường AZURE_DEVOPS_PAT");
   process.exit(1);
@@ -16,8 +17,9 @@ console.log(`   Org URL: ${process.env.AZURE_DEVOPS_ORG_URL}`);
 console.log(`   Port: ${port}`);
 
 const child = spawn(
-  "supergateway",
+  "npx",
   [
+    "-y", "supergateway",
     "--stdio", "mcp-server-azure-devops",
     "--outputTransport", "streamableHttp",
     "--port", String(port),
@@ -28,7 +30,6 @@ const child = spawn(
     stdio: "inherit",
     env: {
       ...process.env,
-      // Map sang đúng tên biến mà @tiberriver256 yêu cầu
       AZURE_DEVOPS_PAT: process.env.AZURE_DEVOPS_PAT || process.env.AZURE_DEVOPS_EXT_PAT,
     },
     shell: true,
