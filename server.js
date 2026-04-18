@@ -1,44 +1,51 @@
 const { spawn } = require("child_process");
-const http = require("http");
 
 const port = process.env.PORT || 8080;
+const org = process.env.AZURE_DEVOPS_ORG;
 
-// Quick health server to pass Azure warmup probe
-const health = http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end("OK");
+if (!org) {
+  console.error("❌ Thiếu biến môi trường AZURE_DEVOPS_ORG");
+  process.exit(1);
+}
+
+console.log(`🚀 Starting Azure DevOps MCP Server...`);
+console.log(`   Org: ${org}`);
+console.log(`   Port: ${port}`);
+
+const child = spawn(
+  "npx",
+  [
+    "-y", "supergateway",
+    "--stdio", `npx -y @azure-devops/mcp ${org}`,
+    "--outputTransport", "streamableHttp",
+    "--port", String(port),
+    "--cors",
+    "--healthEndpoint", "/health",
+  ],
+  {
+    stdio: "inherit",
+    env: process.env,
+    shell: true,
+  }
+);
+
+child.on("error", (err) => {
+  console.error("❌ Failed to start supergateway:", err);
+  process.exit(1);
 });
 
-health.listen(port, () => {
-  console.log(`Health server on port ${port}, waiting for warmup probe...`);
+child.on("exit", (code) => {
+  console.log(`Supergateway exited with code ${code}`);
+  process.exit(code || 0);
+});
 
-  // After 3s, close health server and start supergateway on same port
-  setTimeout(() => {
-    health.close(() => {
-      console.log("Health server closed, starting supergateway...");
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received, shutting down...");
+  child.kill("SIGTERM");
+});
 
-      const child = spawn("supergateway", [
-        "--stdio",
-        "mcp-server-azuredevops agentiqai --authentication envvar -d core work work-items search",
-        "--outputTransport", "streamableHttp",
-        "--port", String(port),
-        "--cors",
-        "--healthEndpoint", "/health",
-      ], {
-        stdio: "inherit",
-        env: process.env,
-        shell: true,
-      });
-
-      child.on("error", (err) => {
-        console.error("Failed to start supergateway:", err);
-        process.exit(1);
-      });
-
-      child.on("exit", (code) => {
-        console.log(`Supergateway exited with code ${code}`);
-        process.exit(code || 0);
-      });
-    });
-  }, 3000);
+process.on("SIGINT", () => {
+  console.log("SIGINT received, shutting down...");
+  child.kill("SIGINT");
 });
