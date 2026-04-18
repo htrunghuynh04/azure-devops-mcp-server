@@ -1,25 +1,22 @@
 const { spawn } = require("child_process");
 
 const port = process.env.PORT || 8080;
+const org = process.env.AZURE_DEVOPS_ORG;
 
-if (!process.env.AZURE_DEVOPS_ORG_URL) {
-  console.error("❌ Thiếu biến môi trường AZURE_DEVOPS_ORG_URL");
-  process.exit(1);
-}
-if (!process.env.AZURE_DEVOPS_PAT) {
-  console.error("❌ Thiếu biến môi trường AZURE_DEVOPS_PAT");
+if (!org) {
+  console.error("❌ Thiếu biến môi trường AZURE_DEVOPS_ORG");
   process.exit(1);
 }
 
 console.log(`🚀 Starting Azure DevOps MCP Server...`);
-console.log(`   Org URL: ${process.env.AZURE_DEVOPS_ORG_URL}`);
+console.log(`   Org: ${org}`);
 console.log(`   Port: ${port}`);
 
 const child = spawn(
-  "node",
+  "npx",
   [
-    "/node_modules/.bin/supergateway",
-    "--stdio", "/node_modules/.bin/mcp-server-azure-devops",
+    "-y", "supergateway",
+    "--stdio", `npx -y @azure-devops/mcp ${org}`,
     "--outputTransport", "streamableHttp",
     "--port", String(port),
     "--cors",
@@ -28,7 +25,7 @@ const child = spawn(
   {
     stdio: "inherit",
     env: process.env,
-    shell: false,
+    shell: true,
   }
 );
 
@@ -42,6 +39,7 @@ child.on("exit", (code) => {
   process.exit(code || 0);
 });
 
+// Graceful shutdown
 process.on("SIGTERM", () => {
   console.log("SIGTERM received, shutting down...");
   child.kill("SIGTERM");
