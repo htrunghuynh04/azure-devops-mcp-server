@@ -31,7 +31,7 @@ const child = spawn(
       ...process.env,
       AZURE_DEVOPS_PAT: process.env.AZURE_DEVOPS_PAT || process.env.AZURE_DEVOPS_EXT_PAT,
     },
-    shell: true,
+    shell: false,
   }
 );
 
