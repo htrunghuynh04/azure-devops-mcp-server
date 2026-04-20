@@ -19,7 +19,7 @@ console.log(`   Port: ${port}`);
 const child = spawn(
   "supergateway",
   [
-    "--stdio", "mcp-server-azure-devops",
+    "--stdio", "npx --yes @tiberriver256/mcp-server-azure-devops",
     "--outputTransport", "streamableHttp",
     "--port", String(port),
     "--cors",
