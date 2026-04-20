@@ -21,16 +21,15 @@ const child = spawn(
   [
     "--stdio", "npx --yes @tiberriver256/mcp-server-azure-devops",
     "--outputTransport", "streamableHttp",
+    "--stateful",
+    "--sessionTimeout", "3600000",
     "--port", String(port),
     "--cors",
     "--healthEndpoint", "/health",
   ],
   {
     stdio: "inherit",
-    env: {
-      ...process.env,
-      AZURE_DEVOPS_PAT: process.env.AZURE_DEVOPS_PAT || process.env.AZURE_DEVOPS_EXT_PAT,
-    },
+    env: { ...process.env },
     shell: false,
   }
 );
